@@ -1,5 +1,6 @@
 package com.wovenware.adyentestui;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,9 @@ import org.killbill.billing.client.api.gen.SubscriptionApi;
 import org.killbill.billing.client.model.Invoices;
 import org.killbill.billing.client.model.KillBillObject;
 import org.killbill.billing.client.model.gen.Account;
+import org.killbill.billing.client.model.gen.HostedPaymentPageFields;
 import org.killbill.billing.client.model.gen.HostedPaymentPageFormDescriptor;
+import org.killbill.billing.client.model.gen.InvoicePayment;
 import org.killbill.billing.client.model.gen.PaymentMethod;
 import org.killbill.billing.client.model.gen.PluginProperty;
 import org.killbill.billing.client.model.gen.Subscription;
@@ -36,30 +39,32 @@ import com.google.common.collect.ImmutableMap;
 @Service
 public class ClientService {
 
-	@Value("killbill.client.url")
+	@Value("${killbill.client.url}")
 	private String killbillClientUrl;
 
-	@Value("killbill.client.disable-ssl-verification")
+	@Value("${killbill.client.disable-ssl-verification}")
 	private String killbillClientDisableSSL;
 
-	@Value("killbill.username")
+	@Value("${killbill.username}")
 	private String username;
 
-	@Value("killbill.password")
+	@Value("${killbill.password}")
 	private String password;
 
-	@Value("killbill.api-key")
+	@Value("${killbill.api-key}")
 	private String apiKey;
 
-	@Value("killbill.api-secret")
+	@Value("${killbill.api-secret}")
 	private String apiSecret;
 
-	@Value("plugin.name")
+	@Value("${plugin.name}")
 	private String pluginName;
 
 	private AccountApi accountApi;
 	private SubscriptionApi subscriptionApi;
+	private InvoiceApi invoiceApi;
 	private KillBillHttpClient httpClient;
+
 
 	// KEYS
 	private static final String SESSION_DATA = "session_data";
@@ -73,6 +78,7 @@ public class ClientService {
 		httpClient = new KillBillHttpClient(killbillClientUrl, username, password, apiKey, apiSecret);
 		accountApi = new AccountApi(httpClient);
 		subscriptionApi = new SubscriptionApi(httpClient);
+		invoiceApi = new InvoiceApi(httpClient);
 	}
 
 	private RequestOptions getOptions() {
@@ -142,7 +148,8 @@ public class ClientService {
 		PaymentMethod paymentMethod = createKBPaymentMethod(account, pluginOptions);
 
 		pluginOptions.put(PAYMENT_METHOD_ID, paymentMethod.getPaymentMethodId().toString());
-		HostedPaymentPageFormDescriptor pageDescriptor = gatewayApi.buildFormDescriptor(account.getAccountId(), null,
+		HostedPaymentPageFields hppFields = new HostedPaymentPageFields();
+		HostedPaymentPageFormDescriptor pageDescriptor = gatewayApi.buildFormDescriptor(account.getAccountId(), hppFields,
 				paymentMethod.getPaymentMethodId(), null, pluginOptions, getOptions());
 		String sessionData = (String) pageDescriptor.getFormFields().get(SESSION_DATA);
 		String sessionId = (String) pageDescriptor.getFormFields().get(SESSION_ID);
@@ -166,9 +173,16 @@ public class ClientService {
 		// # Add a subscription
 		createSubscription(account);
 
-		// # Retrieve the invoice
-		// Invoices invoice = accountApi.getInvoicesForAccount(account.getAccountId(),
-		// null, null, null, getOptions());
+		 // # Retrieve the invoice
+		 Invoices invoice = accountApi.getInvoicesForAccount(account.getAccountId(),
+		 null, null, null, getOptions());
+		 UUID lastInvoiceId = invoice.get(invoice.size()-1).getInvoiceId();
+		 InvoicePayment invoicePayment = new InvoicePayment();
+		 invoicePayment.setPurchasedAmount(BigDecimal.TEN);
+		 invoicePayment.setAccountId(UUID.fromString(accountId));
+		 invoicePayment.setTargetInvoiceId(lastInvoiceId);
+		 // Trigger payment
+		 this.invoiceApi.createInstantPayment(invoice.get(invoice.size()-1).getInvoiceId(), invoicePayment, null, null, getOptions());
 
 	}
 

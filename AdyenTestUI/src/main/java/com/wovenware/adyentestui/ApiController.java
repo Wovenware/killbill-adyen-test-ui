@@ -20,7 +20,7 @@ public class ApiController {
 	@Autowired
 	ClientService clientService;
 
-	@GetMapping("/session")
+	@GetMapping("/session/{amount}")
 	public SessionModel getSession(@PathVariable(name = "amount") BigDecimal amount) throws KillBillClientException {
 		Account account = clientService.createKBAccount();
 		if (amount == null) {
