@@ -55,7 +55,7 @@ public class ClientService {
   private SubscriptionApi subscriptionApi;
   private InvoiceApi invoiceApi;
   private KillBillHttpClient httpClient;
-
+  
   // KEYS
   private static final String SESSION_DATA = "sessionData";
   private static final String SESSION_ID = "sessionId";
