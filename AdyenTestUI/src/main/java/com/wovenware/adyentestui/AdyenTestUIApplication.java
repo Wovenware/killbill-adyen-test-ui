@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AdyenTestUIApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(AdyenTestUIApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(AdyenTestUIApplication.class, args);
+  }
 }

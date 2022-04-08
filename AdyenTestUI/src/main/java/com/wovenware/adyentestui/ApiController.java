@@ -3,13 +3,10 @@ package com.wovenware.adyentestui;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.killbill.billing.client.KillBillClientException;
-import org.killbill.billing.client.api.gen.PaymentGatewayApi;
 import org.killbill.billing.client.model.gen.Account;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,18 +15,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class ApiController {
 
-	@Autowired
-	ClientService clientService;
+  @Autowired ClientService clientService;
 
-	@GetMapping("/session")
-	public SessionModel getSession(@RequestParam(name = "amount") BigDecimal amount) throws KillBillClientException {
-		Account account = clientService.createKBAccount();
-		if (amount == null) {
-			amount = BigDecimal.TEN;
-		}
-		Map<String, String> prop = new HashMap<>();
-		prop.put(ClientService.NEW_SESSION_AMOUNT, amount.toPlainString());
-		return clientService.createSession(account, prop);
-	}
-
+  @GetMapping("/session")
+  public SessionModel getSession(@RequestParam(name = "amount") BigDecimal amount)
+      throws KillBillClientException {
+    Account account = clientService.createKBAccount();
+    if (amount == null) {
+      amount = BigDecimal.TEN;
+    }
+    Map<String, String> prop = new HashMap<>();
+    prop.put(ClientService.NEW_SESSION_AMOUNT, amount.toPlainString());
+    return clientService.createSession(account, prop);
+  }
 }
