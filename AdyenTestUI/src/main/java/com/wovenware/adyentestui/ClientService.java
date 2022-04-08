@@ -67,8 +67,8 @@ public class ClientService {
 
 
 	// KEYS
-	private static final String SESSION_DATA = "session_data";
-	private static final String SESSION_ID = "session_id";
+	private static final String SESSION_DATA = "sessionData";
+	private static final String SESSION_ID = "sessionId";
 	
 	public static final String NEW_SESSION_AMOUNT = "amount";
 	public static final String PAYMENT_METHOD_ID = "paymentMethodId";
