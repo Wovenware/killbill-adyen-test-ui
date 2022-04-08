@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -20,8 +21,8 @@ public class ApiController {
 	@Autowired
 	ClientService clientService;
 
-	@GetMapping("/session/{amount}")
-	public SessionModel getSession(@PathVariable(name = "amount") BigDecimal amount) throws KillBillClientException {
+	@GetMapping("/session")
+	public SessionModel getSession(@RequestParam(name = "amount") BigDecimal amount) throws KillBillClientException {
 		Account account = clientService.createKBAccount();
 		if (amount == null) {
 			amount = BigDecimal.TEN;

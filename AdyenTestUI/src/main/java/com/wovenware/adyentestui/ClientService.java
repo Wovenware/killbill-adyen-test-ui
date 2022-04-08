@@ -71,7 +71,7 @@ public class ClientService {
 	private static final String SESSION_ID = "session_id";
 	
 	public static final String NEW_SESSION_AMOUNT = "amount";
-	public static final String PAYMENT_METHOD_ID = "payment_method_id";
+	public static final String PAYMENT_METHOD_ID = "paymentMethodId";
 	
 	@PostConstruct
 	public void init() {
@@ -83,7 +83,7 @@ public class ClientService {
 
 	private RequestOptions getOptions() {
 		RequestOptionsBuilder builder = new RequestOptionsBuilder();
-		builder.withComment("Trigget by test").withCreatedBy("test").withReason("JAJA").withTenantApiKey(apiKey)
+		builder.withComment("Trigget by test").withCreatedBy("admin").withReason("JAJA").withTenantApiKey(apiKey)
 				.withPassword(password).withTenantApiSecret(apiSecret).withUser(username);
 		return builder.build();
 	}
@@ -148,12 +148,19 @@ public class ClientService {
 		PaymentMethod paymentMethod = createKBPaymentMethod(account, pluginOptions);
 
 		pluginOptions.put(PAYMENT_METHOD_ID, paymentMethod.getPaymentMethodId().toString());
-		HostedPaymentPageFields hppFields = new HostedPaymentPageFields();
+		List<PluginProperty> formFields = new ArrayList<>();
+		pluginOptions.forEach((key,value )-> {
+			formFields.add(new PluginProperty(key,value,false));
+		});
+		
+		
+		HostedPaymentPageFields hppFields = new HostedPaymentPageFields(formFields);
 		HostedPaymentPageFormDescriptor pageDescriptor = gatewayApi.buildFormDescriptor(account.getAccountId(), hppFields,
 				paymentMethod.getPaymentMethodId(), null, pluginOptions, getOptions());
 		String sessionData = (String) pageDescriptor.getFormFields().get(SESSION_DATA);
 		String sessionId = (String) pageDescriptor.getFormFields().get(SESSION_ID);
-
+		System.out.println(sessionData);
+		System.out.println(sessionId);
 		SessionModel sessionModel = new SessionModel();
 		sessionModel.setId(sessionId);
 		sessionModel.setSessionData(sessionData);
