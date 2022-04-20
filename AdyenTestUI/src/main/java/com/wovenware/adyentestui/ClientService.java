@@ -76,11 +76,11 @@ public class ClientService {
     builder
         .withComment("Trigget by test")
         .withCreatedBy("admin")
-        .withReason("JAJA")
-        .withTenantApiKey(apiKey)
-        .withPassword(password)
-        .withTenantApiSecret(apiSecret)
-        .withUser(username);
+        .withReason("JAJA");
+//        .withTenantApiKey(apiKey)
+//        .withPassword(password)
+//        .withTenantApiSecret(apiSecret)
+//        .withUser(username);
     return builder.build();
   }
 
@@ -91,6 +91,7 @@ public class ClientService {
   public Account createKBAccount() throws KillBillClientException {
     Account body = new Account();
     body.setCurrency(Currency.USD);
+    body.setEmail("john@laposte.com");
     body.setName("John Doe");
     return accountApi.createAccount(body, getOptions());
   }

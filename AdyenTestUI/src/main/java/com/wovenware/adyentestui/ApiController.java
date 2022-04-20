@@ -27,9 +27,9 @@ public class ApiController {
 		ss.setId(theSessionId);
 		ss.setSessionData(theSessionData);
 
-		if (amount != null) {
-			return ss;
-		}
+//		if (amount != null) {
+//			return ss;
+//		}
 		Account account = clientService.createKBAccount();
 		if (amount == null) {
 			amount = BigDecimal.TEN;

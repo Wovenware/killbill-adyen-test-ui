@@ -15,20 +15,25 @@ $(document).ready(function() {
 			},
 			// Any payment method specific configuration. Find the configuration specific to each payment method:  https://docs.adyen.com/payment-methods
 			// For example, this is 3D Secure configuration for cards:
-			paymentMethodsConfiguration: {
+		/*	paymentMethodsConfiguration: {
 				card: {
-					hasHolderName: true,
-					holderNameRequired: true,
-					billingAddressRequired: true
+					hasHolderName: false,
+					holderNameRequired: falase,
+					name: "Credit or debit card",
+					amount: {
+						value: 1000,
+						currency: "USD",
+					}
 				}
-			}
+			} */
 		};
 
 		// Create an instance of AdyenCheckout using the configuration object.
-		const checkout = await new AdyenCheckout(configuration);
+		const checkout = await AdyenCheckout(configuration);
 
 		// Create an instance of Drop-in and mount it to the container you created.
-		const dropinComponent = checkout.create('dropin').mount('#dropin-container');
+		//checkout.create('dropin').mount('#dropin-container');
+		checkout.create('dropin').mount(document.getElementById("dropin-container"));
 	};
 
 	$("#checkoutClick").on("click", function(event) {
