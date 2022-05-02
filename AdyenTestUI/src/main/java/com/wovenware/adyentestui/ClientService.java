@@ -2,6 +2,7 @@ package com.wovenware.adyentestui;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,18 +15,19 @@ import org.killbill.billing.client.RequestOptions;
 import org.killbill.billing.client.RequestOptions.RequestOptionsBuilder;
 import org.killbill.billing.client.api.gen.AccountApi;
 import org.killbill.billing.client.api.gen.InvoiceApi;
-import org.killbill.billing.client.api.gen.PaymentGatewayApi;
 import org.killbill.billing.client.api.gen.SubscriptionApi;
 import org.killbill.billing.client.model.Invoices;
 import org.killbill.billing.client.model.gen.Account;
-import org.killbill.billing.client.model.gen.HostedPaymentPageFields;
-import org.killbill.billing.client.model.gen.HostedPaymentPageFormDescriptor;
 import org.killbill.billing.client.model.gen.InvoicePayment;
 import org.killbill.billing.client.model.gen.PaymentMethod;
 import org.killbill.billing.client.model.gen.PluginProperty;
 import org.killbill.billing.client.model.gen.Subscription;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class ClientService {
@@ -55,13 +57,16 @@ public class ClientService {
   private SubscriptionApi subscriptionApi;
   private InvoiceApi invoiceApi;
   private KillBillHttpClient httpClient;
-  
+  private RestTemplate restTemplate = new RestTemplate();
+
   // KEYS
   private static final String SESSION_DATA = "sessionData";
   private static final String SESSION_ID = "sessionId";
 
   public static final String NEW_SESSION_AMOUNT = "amount";
   public static final String PAYMENT_METHOD_ID = "paymentMethodId";
+  public static final String ENABLE_RECURRING = "enableRecurring";
+  private static final String KB_ACCOUNT_ID = "kbAccountId";
 
   @PostConstruct
   public void init() {
@@ -73,14 +78,8 @@ public class ClientService {
 
   private RequestOptions getOptions() {
     RequestOptionsBuilder builder = new RequestOptionsBuilder();
-    builder
-        .withComment("Trigget by test")
-        .withCreatedBy("admin")
-        .withReason("JAJA");
-//        .withTenantApiKey(apiKey)
-//        .withPassword(password)
-//        .withTenantApiSecret(apiSecret)
-//        .withUser(username);
+    builder.withComment("Trigget by test").withCreatedBy("admin").withReason("JAJA");
+
     return builder.build();
   }
 
@@ -139,8 +138,9 @@ public class ClientService {
    */
   public SessionModel createSession(Account account, Map<String, String> pluginOptions)
       throws KillBillClientException {
-    PaymentGatewayApi gatewayApi = new PaymentGatewayApi(httpClient);
-    PaymentMethod paymentMethod = createKBPaymentMethod(account, pluginOptions);
+    Map<String, String> paymentMethodProp = new HashMap<>();
+    paymentMethodProp.put(ENABLE_RECURRING, pluginOptions.get(ENABLE_RECURRING));
+    PaymentMethod paymentMethod = createKBPaymentMethod(account, paymentMethodProp);
 
     pluginOptions.put(PAYMENT_METHOD_ID, paymentMethod.getPaymentMethodId().toString());
     List<PluginProperty> formFields = new ArrayList<>();
@@ -148,20 +148,17 @@ public class ClientService {
         (key, value) -> {
           formFields.add(new PluginProperty(key, value, false));
         });
+    pluginOptions.put(KB_ACCOUNT_ID, account.getAccountId().toString());
+    HttpEntity<List<PluginProperty>> request =
+        new HttpEntity<List<PluginProperty>>(formFields, getHeaders());
+    String resourceUrl =
+        "http://killbill.centralus.cloudapp.azure.com:8080/plugins/adyen-plugin/checkout?kbAccountId={kbAccountId}&amount={amount}&kbPaymentMethodId={paymentMethodId}";
+    Map<String, String> test =
+        restTemplate.postForObject(resourceUrl, request, HashMap.class, pluginOptions);
 
-    HostedPaymentPageFields hppFields = new HostedPaymentPageFields(formFields);
-    HostedPaymentPageFormDescriptor pageDescriptor =
-        gatewayApi.buildFormDescriptor(
-            account.getAccountId(),
-            hppFields,
-            paymentMethod.getPaymentMethodId(),
-            null,
-            pluginOptions,
-            getOptions());
-    String sessionData = (String) pageDescriptor.getFormFields().get(SESSION_DATA);
-    String sessionId = (String) pageDescriptor.getFormFields().get(SESSION_ID);
-    System.out.println(sessionData);
-    System.out.println(sessionId);
+    String sessionData = test.get(SESSION_DATA);
+    String sessionId = test.get(SESSION_ID);
+
     SessionModel sessionModel = new SessionModel();
     sessionModel.setId(sessionId);
     sessionModel.setSessionData(sessionData);
@@ -192,5 +189,15 @@ public class ClientService {
     // Trigger payment
     this.invoiceApi.createInstantPayment(
         invoice.get(invoice.size() - 1).getInvoiceId(), invoicePayment, null, null, getOptions());
+  }
+
+  public HttpHeaders getHeaders() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.add("X-Killbill-ApiKey", apiKey);
+    headers.add("X-Killbill-ApiSecret", apiSecret);
+    headers.add("X-Killbill-CreatedBy", "test");
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.setBasicAuth(username, password);
+    return headers;
   }
 }
