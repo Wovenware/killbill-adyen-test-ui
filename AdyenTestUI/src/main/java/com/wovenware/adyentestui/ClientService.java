@@ -52,6 +52,9 @@ public class ClientService {
 
   @Value("${plugin.name}")
   private String pluginName;
+  
+  @Value("${checkoutUrl}")
+  private String checkoutUrl;
 
   private AccountApi accountApi;
   private SubscriptionApi subscriptionApi;
@@ -152,7 +155,7 @@ public class ClientService {
     HttpEntity<List<PluginProperty>> request =
         new HttpEntity<List<PluginProperty>>(formFields, getHeaders());
     String resourceUrl =
-        "http://killbill.centralus.cloudapp.azure.com:8080/plugins/adyen-plugin/checkout?kbAccountId={kbAccountId}&amount={amount}&kbPaymentMethodId={paymentMethodId}";
+    		checkoutUrl+"/checkout?kbAccountId={kbAccountId}&amount={amount}&kbPaymentMethodId={paymentMethodId}";
     Map<String, String> test =
         restTemplate.postForObject(resourceUrl, request, HashMap.class, pluginOptions);
 
